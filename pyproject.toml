@@ -1,0 +1,17 @@
+[tool.poetry]
+name = "app-updater"
+version = "0.1.0"
+description = ""
+authors = ["Matias Bertani <matiasbertani@gmail.com>"]
+readme = "README.md"
+packages = [{include = "app_updater"}]
+
+[tool.poetry.dependencies]
+python = "^3.11"
+pwinput = "^1.0.3"
+pytest = "^7.4.0"
+
+
+[build-system]
+requires = ["poetry-core"]
+build-backend = "poetry.core.masonry.api"
