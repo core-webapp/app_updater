@@ -20,6 +20,5 @@ def test_get_api_token_from_user(
     expected: str,
 ):
     pwinput_mock.return_value = user_input
-    app_updater = AppUpdater()
-    result = app_updater._get_api_token_from_user()
+    result = AppUpdater._get_api_token_from_user()
     assert result == expected
