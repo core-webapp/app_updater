@@ -1,5 +1,7 @@
-from unittest import mock
-from unittest.mock import MagicMock
+from unittest.mock import (
+    MagicMock,
+    patch,
+)
 
 import pytest
 
@@ -13,7 +15,7 @@ from src.app_updater import AppUpdater
         ('', ''),
     ]
 )
-@mock.patch('src.app_updater.pwinput')
+@patch('src.app_updater.pwinput')
 def test_get_api_token_from_user(
     pwinput_mock: MagicMock,
     user_input: str,
