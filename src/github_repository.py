@@ -7,6 +7,9 @@ from github import (
 
 class GithubRepository:
 
+    def __init__(self, api_token: str) -> None:
+        self.github_account = self._get_github_account(api_token)
+
     @classmethod
     def _is_token_valid(cls, token: str) -> bool:
         try:
