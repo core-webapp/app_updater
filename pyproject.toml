@@ -10,6 +10,7 @@ packages = [{include = "app_updater"}]
 python = "^3.11"
 pwinput = "^1.0.3"
 pytest = "^7.4.0"
+pygithub = "^1.59.0"
 
 
 [build-system]
