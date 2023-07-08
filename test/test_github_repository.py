@@ -12,6 +12,24 @@ from github import (
 from src.github_repository import GithubRepository
 
 
+def get_github_repository_mock(
+    token="some_token",
+    organizacion_name="some_organization",
+    repository_name="some_repository",
+):
+
+    with patch.object(GithubRepository, '_get_github_account'):
+        with patch.object(GithubRepository, '_get_last_release'):
+            with patch.object(GithubRepository, '_get_commit_sha_of_release', return_value="fake_commit_sha"):
+
+                github_repository = GithubRepository(
+                    api_token=token,
+                    organizacion_name=organizacion_name,
+                    repository_name=repository_name,
+                )
+    return github_repository
+
+
 @patch.object(GithubRepository, '_get_commit_sha_of_release')
 @patch.object(GithubRepository, '_get_last_release')
 @patch.object(GithubRepository, '_get_github_account')
@@ -116,3 +134,81 @@ def test_is_token_valid_with_invalid_token(patched_get_github_account):
     # asserts
     patched_get_github_account.assert_called_once_with(token)
     assert result is False
+
+
+@patch.object(GithubRepository, '_get_commit_sha_of_release')
+@patch.object(GithubRepository, '_get_last_release')
+@patch.object(GithubRepository, '_get_github_account')
+def test_last_release_property(
+    patched_get_github_account: MagicMock,
+    patched_get_last_release: MagicMock,
+    patched_get_commit_sha_of_release: MagicMock,
+):
+    token = "some_token"
+    organizacion_name = "some_organization"
+    repository_name = "some_repository"
+
+    mock_repo = Mock()
+    mock_github_account = Mock()
+    mock_github_account.get_repo.return_value = mock_repo
+    patched_get_github_account.return_value = mock_github_account
+
+    fake_last_release = "fake_last_release"
+    patched_get_last_release.return_value = fake_last_release
+    fake_commit_sha = "fake_commit_sha"
+    patched_get_commit_sha_of_release.return_value = fake_commit_sha
+
+    github_repository = GithubRepository(token, organizacion_name, repository_name)
+
+    # test
+    last_release = github_repository.last_release
+
+    # asserts
+    assert last_release == fake_last_release
+
+
+def test_get_last_release():
+
+    # prepare
+    expected_last_release = "expected_last_release"
+
+    mock_latest_release = Mock()
+    mock_latest_release.tag_name = expected_last_release
+
+    mock_repository = Mock()
+    mock_repository.get_latest_release.return_value = mock_latest_release
+
+    mock_github_repository = get_github_repository_mock()
+    mock_github_repository.repository = mock_repository
+
+    # test
+    last_release = mock_github_repository._get_last_release()
+
+    # asserts
+    mock_repository.get_latest_release.assert_called_once()
+    assert last_release == expected_last_release
+
+
+def test_get_commit_sha_of_release():
+
+    # prepare
+    expected_commit_sha = "expected_commit_sha"
+
+    mock_release = Mock()
+    mock_release.tag_name = "some_tag_name"
+
+    mock_release_commit = Mock()
+    mock_release_commit.object.sha = expected_commit_sha
+
+    mock_repository = Mock()
+    mock_repository.get_git_ref.return_value = mock_release_commit
+
+    mock_github_repository = get_github_repository_mock()
+    mock_github_repository.repository = mock_repository
+
+    # test
+    last_release = mock_github_repository._get_commit_sha_of_release(mock_release)
+
+    # asserts
+    mock_repository.get_git_ref.assert_called_once_with(f"tags/{mock_release.tag_name}")
+    assert last_release == expected_commit_sha
