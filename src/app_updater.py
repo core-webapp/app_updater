@@ -27,7 +27,8 @@ class AppUpdater:
 
     def update_source_code(self):
 
-        # TODO: get token from user and if it is valid continue
+        token = self._get_api_token()
+        github_repository = GithubRepository(token)
 
         # TODO: compare local version with remote version and return the newer one
 
@@ -63,7 +64,3 @@ class AppUpdater:
                 return api_token
         raise Exception('Max retries exceeded')
 
-    @classmethod
-    def _get_github_repository(cls):
-        api_token = cls._get_api_token()
-        return GithubRepository(api_token)

@@ -1,6 +1,5 @@
 from unittest.mock import (
     MagicMock,
-    Mock,
     patch,
 )
 
@@ -58,21 +57,3 @@ def test_get_api_token(
     patched_is_token_valid.side_effect = [False] * amount_of_bad_tokens + [True]
     result_token = AppUpdater._get_api_token()
     assert result_token == token
-
-
-@patch('src.app_updater.GithubRepository')
-@patch.object(AppUpdater, '_get_api_token')
-def test_get_github_repository(
-    patched_get_api_token: MagicMock,
-    mock_github_repository: MagicMock,
-):
-    token = "some_token"
-    patched_get_api_token.return_value = token
-
-    github_repository_instanse = Mock()
-    mock_github_repository.return_value = github_repository_instanse
-
-    result = AppUpdater._get_github_repository()
-
-    mock_github_repository.assert_called_once_with(token)
-    assert result == github_repository_instanse
