@@ -1,10 +1,13 @@
+from datetime import datetime
 from unittest.mock import (
+    mock_open,
+    patch,
     MagicMock,
     Mock,
-    patch,
 )
 
 import pytest
+import yaml
 
 from src.app_updater import AppUpdater
 from src.github_repository import GithubRepository
@@ -60,19 +63,102 @@ def test_get_api_token(
     assert result_token == token
 
 
-@patch('src.app_updater.GithubRepository')
-@patch.object(AppUpdater, '_get_api_token')
-def test_get_github_repository(
-    patched_get_api_token: MagicMock,
-    mock_github_repository: MagicMock,
+@pytest.mark.parametrize(
+    "current_version, remote_version, expected", [
+        ('1.0.0', '1.0.0', False),
+        ('1.0.0', '1.0.1', True),
+        ('1.0.1', '1.0.0', False),
+        ('v1.0.0', 'v1.0.0', False),
+        ('v1.0.0', 'v1.0.1', True),
+        ('v1.0.1', 'v1.0.0', False),
+    ]
+)
+@patch.object(AppUpdater, '_get_current_local_version')
+def test_there_is_a_newer_version(
+    patched_get_current_local_version: MagicMock,
+    current_version: str,
+    remote_version: str,
+    expected: bool,
 ):
-    token = "some_token"
-    patched_get_api_token.return_value = token
+    # prepare
+    patched_get_current_local_version.return_value = current_version
+    mock_github_repository = Mock()
+    mock_github_repository.release = remote_version
 
-    github_repository_instanse = Mock()
-    mock_github_repository.return_value = github_repository_instanse
+    app_updater = AppUpdater()
 
-    result = AppUpdater._get_github_repository()
+    # test
+    result = app_updater._there_is_a_newer_version(mock_github_repository)
 
-    mock_github_repository.assert_called_once_with(token)
-    assert result == github_repository_instanse
+    # asserts
+    patched_get_current_local_version.assert_called_once()
+    assert result == expected
+
+
+@patch.object(AppUpdater, '_get_version_info_from_file')
+def test_get_current_local_version(patch_get_version_info_from_file: MagicMock):
+    expected_last_release = 'fake_last_release'
+
+    mock_current_local_version = {
+        "release_version": expected_last_release,
+        "commit_sha": 'fake_commit_sha',
+        "commit_short_sha": 'commit_short_sha',
+    }
+    patch_get_version_info_from_file.return_value = mock_current_local_version
+    app_updater = AppUpdater()
+
+    # test
+    result = app_updater._get_current_local_version()
+    patch_get_version_info_from_file.assert_called_once_with('.version.yaml')
+    assert result == expected_last_release
+
+
+def test_get_version_info_from_file_valid_file():
+
+    mock_filepath = 'path/to/file.yaml'
+    mock_yaml_file = '''
+    release: 1.0.0
+    commit_sha: 1q2w3e4r5t6y7u8i9o0p
+    commit_short_sha: 1q2w3e4
+    last_update: 2020-01-01T00:00:00Z
+    '''
+
+    with patch("builtins.open", mock_open(read_data=mock_yaml_file)) as mock_file:
+        with patch("os.path.isfile", return_value=True) as mock_os_path_isfile:
+            version_info = AppUpdater._get_version_info_from_file(mock_filepath)
+
+    mock_os_path_isfile.assert_called_once_with(mock_filepath)
+    mock_file.assert_called_once_with(mock_filepath, 'r')
+    assert version_info == {
+        'release': '1.0.0',
+        'commit_sha': '1q2w3e4r5t6y7u8i9o0p',
+        'commit_short_sha': '1q2w3e4',
+        'last_update': datetime.fromisoformat('2020-01-01T00:00:00Z'),
+    }
+
+
+def test_get_version_info_from_file_invalid_file():
+    mock_filepath = "path/to/invalid/file.yaml"
+
+    with patch("os.path.isfile", return_value=False):
+        with pytest.raises(Exception) as e_info:
+            AppUpdater._get_version_info_from_file(mock_filepath)
+
+    assert str(e_info.value) == "El archivo no existe"
+
+
+def test_get_version_info_from_file_invalid_yaml():
+    mock_yaml_content = """
+    release 1.0.0
+    commit_sha: 1q2w3e4r5t6y7u8i9o0p
+    commit_short_sha: 1q2w3e4
+    last_update: 2020-01-01T00:00:00Z
+    """  # The YAML is invalid because first row doesn't have the ':' after 'release'
+    mock_filepath = "path/to/file.yaml"
+
+    with patch("builtins.open", mock_open(read_data=mock_yaml_content)) as mock_file:
+        with patch("os.path.isfile", return_value=True):
+            with pytest.raises(yaml.YAMLError):
+                AppUpdater._get_version_info_from_file(mock_filepath)
+
+    mock_file.assert_called_once_with(mock_filepath, 'r')

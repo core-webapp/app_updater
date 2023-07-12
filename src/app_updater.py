@@ -1,3 +1,7 @@
+import os
+import yaml
+
+from packaging import version
 from pwinput import pwinput
 
 from .github_repository import GithubRepository
@@ -27,15 +31,13 @@ class AppUpdater:
 
     def update_source_code(self):
 
-        # TODO: get token from user and if it is valid continue
+        token = self._get_api_token()
+        github_repository = GithubRepository(token)
 
-        # TODO: compare local version with remote version and return the newer one
-
-        # TODO: if local version is older than remote version ask th operator if wants to update to new
-
-        # TODO: if operator wants to update, make a git pull
-
-        # TODO: if operator doesn't want to update continue con update process
+        if self._there_is_a_newer_version(github_repository):
+            # TODO: if operator wants to update, make a git pull
+            # TODO: if operator doesn't want to update continue con update process
+            pass
 
         # TODO: ask the operator if wants to update the database
 
@@ -63,7 +65,23 @@ class AppUpdater:
                 return api_token
         raise Exception('Max retries exceeded')
 
-    @classmethod
-    def _get_github_repository(cls):
-        api_token = cls._get_api_token()
-        return GithubRepository(api_token)
+    def _there_is_a_newer_version(self, github_repository: GithubRepository) -> bool:
+        current_release_version = version.parse(self._get_current_local_version())
+        remote_release_version = version.parse(github_repository.release)
+
+        return current_release_version < remote_release_version
+
+    def _get_current_local_version(self) -> str:
+        current_local_version = self._get_version_info_from_file('.version.yaml')
+        release_version = current_local_version.get('release_version')
+        return release_version
+
+    @staticmethod
+    def _get_version_info_from_file(filepath: str) -> dict:
+
+        if not os.path.isfile(filepath):
+            raise Exception("El archivo no existe")
+
+        with open(filepath, 'r') as file:
+            data = yaml.safe_load(file)
+        return data
