@@ -11,7 +11,12 @@ python = "^3.11"
 pwinput = "^1.0.3"
 pytest = "^7.4.0"
 pygithub = "^1.59.0"
+pyyaml = "^6.0"
 
+
+
+[tool.poetry.group.dev.dependencies]
+coverage = "^7.2.7"
 
 [build-system]
 requires = ["poetry-core"]
