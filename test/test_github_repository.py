@@ -168,6 +168,37 @@ def test_last_release_property(
     assert last_release == fake_last_release
 
 
+@patch.object(GithubRepository, '_get_commit_sha_of_release')
+@patch.object(GithubRepository, '_get_last_release')
+@patch.object(GithubRepository, '_get_github_account')
+def test_commit_of_last_release_property(
+    patched_get_github_account: MagicMock,
+    patched_get_last_release: MagicMock,
+    patched_get_commit_sha_of_release: MagicMock,
+):
+    token = "some_token"
+    organizacion_name = "some_organization"
+    repository_name = "some_repository"
+
+    mock_repo = Mock()
+    mock_github_account = Mock()
+    mock_github_account.get_repo.return_value = mock_repo
+    patched_get_github_account.return_value = mock_github_account
+
+    fake_last_release = "fake_last_release"
+    patched_get_last_release.return_value = fake_last_release
+    expected_commit_of_last_release = "fake_commit_sha"
+    patched_get_commit_sha_of_release.return_value = expected_commit_of_last_release
+
+    github_repository = GithubRepository(token, organizacion_name, repository_name)
+
+    # test
+    commit_of_last_release = github_repository.commit_of_last_release
+
+    # asserts
+    assert commit_of_last_release == expected_commit_of_last_release
+
+
 def test_get_last_release():
 
     # prepare

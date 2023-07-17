@@ -36,6 +36,10 @@ class GithubRepository:
     def last_release(self) -> str:
         return self.version_info.get('last_release')
 
+    @property
+    def commit_of_last_release(self) -> str:
+        return self.version_info.get('commit_sha')
+
     @classmethod
     def _is_token_valid(cls, token: str) -> bool:
         try:
