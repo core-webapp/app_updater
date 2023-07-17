@@ -1,9 +1,12 @@
+from pathlib import Path
+
 from github import (
     Auth,
     BadCredentialsException,
     Github,
     GitRelease,
 )
+from git import Repo
 
 
 class GithubRepository:
@@ -13,6 +16,8 @@ class GithubRepository:
         self.api_token = api_token
         self.organizacion_name = organizacion_name
         self.repository_name = repository_name
+
+        self.source_code_path = Path.cwd() / repository_name
 
         self.github_account = self._get_github_account(self.api_token)
         self.repository = self.github_account.get_repo(f'{self.organizacion_name}/{self.repository_name}')
@@ -52,3 +57,12 @@ class GithubRepository:
     def _get_commit_sha_of_release(self, release: GitRelease.GitRelease) -> str:
         release_commit = self.repository.get_git_ref(f"tags/{release.tag_name}")
         return release_commit.object.sha
+
+    def change_source_code_version(self, commit: str) -> None:
+        self._fetch_and_checkout(commit)
+
+    def _fetch_and_checkout(self, commit: str) -> None:
+        # TODO: check if local_repository_path exists ?? or maybe this ewhen the process willbe automatic
+        local_repository = Repo(self.source_code_path)
+        local_repository.remote().fetch()
+        local_repository.git.checkout(commit)

@@ -4,6 +4,7 @@ from unittest.mock import (
     patch,
 )
 
+from git import Repo
 from github import (
     Auth,
     BadCredentialsException,
@@ -212,3 +213,36 @@ def test_get_commit_sha_of_release():
     # asserts
     mock_repository.get_git_ref.assert_called_once_with(f"tags/{mock_release.tag_name}")
     assert last_release == expected_commit_sha
+
+
+@patch.object(GithubRepository, '_fetch_and_checkout')
+def test_change_source_code_version(patched_fetch_and_checkout: MagicMock):
+    # prepare
+    mock_github_repository = get_github_repository_mock()
+    fake_commit = "fake_commit"
+
+    # test
+    mock_github_repository.change_source_code_version(fake_commit)
+
+    # asserts
+    patched_fetch_and_checkout.assert_called_once_with(fake_commit)
+
+
+@patch('src.github_repository.Repo')
+def test_fetch_and_checkout(patched_repo: MagicMock):
+    # prepare
+    mock_repository = Mock()
+    patched_repo.return_value = mock_repository
+
+    mock_github_repository = get_github_repository_mock()
+    fake_commit = "fake_commit"
+
+    # test
+    mock_github_repository._fetch_and_checkout(fake_commit)
+
+    # asserts
+    patched_repo.assert_called_once_with(mock_github_repository.source_code_path)
+    mock_repository.remote.assert_called_once()
+    mock_repository.remote().fetch.assert_called_once()
+    mock_repository.git.checkout.assert_called_once_with(fake_commit)
+
