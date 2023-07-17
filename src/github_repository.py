@@ -62,6 +62,10 @@ class GithubRepository:
         release_commit = self.repository.get_git_ref(f"tags/{release.tag_name}")
         return release_commit.object.sha
 
+    def _clone_repository(self, repository_url: str, path_to_clone_the_app: str):
+        repo_url_with_token = repository_url.replace('https://', f'https://{self.api_token}@')
+        Repo.clone_from(repo_url_with_token, path_to_clone_the_app)
+
     def change_source_code_version(self, commit: str) -> None:
         self._fetch_and_checkout(commit)
 

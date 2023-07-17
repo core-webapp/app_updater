@@ -277,3 +277,20 @@ def test_fetch_and_checkout(patched_repo: MagicMock):
     mock_repository.remote().fetch.assert_called_once()
     mock_repository.git.checkout.assert_called_once_with(fake_commit)
 
+
+@patch.object(Repo, 'clone_from')
+def test_clone_repository(patched_clone_from: MagicMock):
+    # prepare
+    fake_repository_url = "https://fake_repository_url"
+    fake_path_to_clone_the_app = "fake_path_to_clone_the_app"
+
+    token = "some_token"
+    expected_repo_url_with_token = f"https://{token}@fake_repository_url"
+
+    mock_github_repository = get_github_repository_mock(token=token)
+
+    # test
+    mock_github_repository._clone_repository(fake_repository_url, fake_path_to_clone_the_app)
+
+    # asserts
+    patched_clone_from.assert_called_once_with(expected_repo_url_with_token, fake_path_to_clone_the_app)
