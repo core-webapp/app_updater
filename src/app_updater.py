@@ -4,6 +4,8 @@ import yaml
 from packaging import version
 from pwinput import pwinput
 
+from src.data_protocols import UserMessages
+
 from .github_repository import GithubRepository
 
 
@@ -11,6 +13,7 @@ class AppUpdater:
     max_input_retries = 3
     organization_name = "core-webapp"
     repository_name = "app_updater"
+    user_input_true = 'y'
 
     def install_source_code(self):
 
@@ -26,6 +29,8 @@ class AppUpdater:
 
         # TODO: install environment setup asking operator each value offering a default value
 
+        # TODO: write the .version.yaml file with the current release version and commit shas
+
         # TODO: send mail with a resume of the new changes
         pass
 
@@ -35,9 +40,7 @@ class AppUpdater:
         github_repository = GithubRepository(token)
 
         if self._there_is_a_newer_version(github_repository):
-            # TODO: if operator wants to update, make a git pull
-            # TODO: if operator doesn't want to update continue con update process
-            pass
+            self._update_to_new_version_if_operator_wants(github_repository)
 
         # TODO: ask the operator if wants to update the database
 
@@ -66,10 +69,12 @@ class AppUpdater:
         raise Exception('Max retries exceeded')
 
     def _there_is_a_newer_version(self, github_repository: GithubRepository) -> bool:
-        current_release_version = version.parse(self._get_current_local_version())
-        remote_release_version = version.parse(github_repository.release)
+        # FIXME : it's not a good idea to set values ina method that does another thing
+        # but for now is the easy and fast way to do it, I will refactor later
+        self.current_release_version = version.parse(self._get_current_local_version())
+        self.remote_release_version = version.parse(github_repository.release)
 
-        return current_release_version < remote_release_version
+        return self.current_release_version < self.remote_release_version
 
     def _get_current_local_version(self) -> str:
         current_local_version = self._get_version_info_from_file('.version.yaml')
@@ -85,3 +90,28 @@ class AppUpdater:
         with open(filepath, 'r') as file:
             data = yaml.safe_load(file)
         return data
+
+    def _update_to_new_version_if_operator_wants(self, github_repository: GithubRepository) -> None:
+        # TODO: refactor when the CLI class is created
+        user_messages = UserMessages(
+            prints=[
+                f"La version actual es: {self.current_release_version}",
+                f"Hay una nueva version disponible: {self.remote_release_version}",
+            ],
+            input="Desea actualizar la app? [Y/n]",
+        )
+        if self._operator_wants(user_messages):
+            self._update_to_new_version(github_repository)
+
+    def _operator_wants(self, user_messages: UserMessages) -> bool:
+        # FIXME: this method must go in another class with the responsabilty
+        # to comunicate with the operator, a CLI class, when that class is created migrated this to there
+        for print_message in user_messages.prints:
+            print(print_message)
+
+        answer = input(user_messages.input).lower()
+        return answer == self.user_input_true
+
+    def _update_to_new_version(self, github_repository: GithubRepository):
+        commit_of_last_release = github_repository.commit_of_last_release
+        github_repository.change_source_code_version(commit_of_last_release)
