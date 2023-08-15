@@ -197,3 +197,14 @@ class AppUpdater:
     def _get_new_maximum_number_of_processes_from_operator(self) -> str:
         new_maximum_number_of_processes = input("Ingrese la nueva fecha de expiracion: ")
         return new_maximum_number_of_processes
+
+    def _save_the_license_encoded(self, license: dict) -> None:
+        encoded_license = self._encode_license(license)
+        with open(self.license_path, 'wb') as file:
+            file.write(encoded_license)
+
+    def _encode_license(self, license: dict) -> str:
+        raw_yaml_license = yaml.dump(license)
+        encoded_license = base64.b64encode(raw_yaml_license.encode('utf-8'))
+        return encoded_license
+
