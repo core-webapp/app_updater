@@ -50,15 +50,10 @@ class AppUpdater:
             self._update_to_new_version_if_operator_wants(github_repository)
 
         self._install_dependencies_from_requirements()
-        # TODO: ask the operator if wants to update the database
 
-        # TODO: ask the operator if wants to update the license
+        self.update_the_license_if_operator_wants()
 
-        # TODO: if operator wants to update the license, ask him the new expiration date
-
-        # TODO : show operator the current environment setup and ask him if wants to update it
-
-        # TODO : if operator wants to update it, ask him each value offering a the current one as default value
+        # TODO: ask the operator if wants to update the database, include an migration tool like alembic for this
 
         # TODO: send mail with a resume of the new changes
 
@@ -140,6 +135,23 @@ class AppUpdater:
         except Exception as e:
             print(f"Ocurrió un error inesperado: {e}")
             traceback.print_exc()
+
+    def update_the_license_if_operator_wants(self):
+        user_messages = UserMessages(
+            prints=[],
+            input="Desea actualizar la app? [Y/n]",
+        )
+        if self._operator_wants(user_messages):
+            self._update_the_license()
+
+    def _update_the_license(self) -> None:
+
+        license = self._get_the_license_decoded()
+        license = self._update_expitation_date_if_operator_wants(license)
+        license = self._update_the_maximum_number_of_processes_if_operator_wants(license)
+        self._save_the_license_encoded(license)
+        self._log_change("Se actualizo la licencia:\n\n")
+        self._log_change(license)
 
     def _get_the_license_decoded(self) -> str:
         encodede_license = self._get_license_from_file()
