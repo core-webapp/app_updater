@@ -1,19 +1,22 @@
+from pathlib import Path
 import os
+import subprocess
+import traceback
 import yaml
 
 from packaging import version
 from pwinput import pwinput
 
 from src.data_protocols import UserMessages
-
 from .github_repository import GithubRepository
 
 
 class AppUpdater:
     max_input_retries = 3
     organization_name = "core-webapp"
-    repository_name = "app_updater"
+    repository_name = "core_legacy"
     user_input_true = 'y'
+    requirements_path = Path() / repository_name / 'requirements.txt'
 
     def install_source_code(self):
 
@@ -42,6 +45,7 @@ class AppUpdater:
         if self._there_is_a_newer_version(github_repository):
             self._update_to_new_version_if_operator_wants(github_repository)
 
+        self._install_dependencies_from_requirements()
         # TODO: ask the operator if wants to update the database
 
         # TODO: ask the operator if wants to update the license
@@ -115,3 +119,14 @@ class AppUpdater:
     def _update_to_new_version(self, github_repository: GithubRepository):
         commit_of_last_release = github_repository.commit_of_last_release
         github_repository.change_source_code_version(commit_of_last_release)
+
+    def _install_dependencies_from_requirements(self) -> None:
+        try:
+            subprocess.check_call(["pip", "install", "-r", self.requirements_path])
+            print("Dependencias instaladas con éxito.")
+        except subprocess.CalledProcessError:
+            print("Hubo un error al instalar las dependencias.")
+            traceback.print_exc()
+        except Exception as e:
+            print(f"Ocurrió un error inesperado: {e}")
+            traceback.print_exc()
