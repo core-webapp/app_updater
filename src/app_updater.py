@@ -20,6 +20,8 @@ class AppUpdater:
     license_path = Path() / repository_name / 'state' / 'utils' / 'license.yaml'
     requirements_path = Path() / repository_name / 'requirements.txt'
 
+    changes_made = []
+
     def install_source_code(self):
 
         # TODO: get token from user and if it is valid continue
@@ -121,6 +123,12 @@ class AppUpdater:
     def _update_to_new_version(self, github_repository: GithubRepository):
         commit_of_last_release = github_repository.commit_of_last_release
         github_repository.change_source_code_version(commit_of_last_release)
+        self._log_change(
+            f"Se actualizo a la version {github_repository.last_release} - commit {commit_of_last_release}\n\n"
+        )
+
+    def _log_change(self, change: str) -> None:
+        self.changes_made.append(change)
 
     def _install_dependencies_from_requirements(self) -> None:
         try:
