@@ -9,6 +9,7 @@ from packaging import version
 from pwinput import pwinput
 
 from src.data_protocols import UserMessages
+from src.email_sender import EmailSender
 from .github_repository import GithubRepository
 
 
@@ -19,6 +20,13 @@ class AppUpdater:
     user_input_true = 'y'
     license_path = Path() / repository_name / 'state' / 'utils' / 'license.yaml'
     requirements_path = Path() / repository_name / 'requirements.txt'
+
+    # TODO where should we add the developers? harcoded here or in a config file?
+    developers: tuple[str]
+
+    # TODO where should we mail credentials? harcoded here or in a config file?
+    user_mail: str
+    password_mail: str
 
     changes_made = []
 
@@ -55,9 +63,7 @@ class AppUpdater:
 
         # TODO: ask the operator if wants to update the database, include an migration tool like alembic for this
 
-        # TODO: send mail with a resume of the new changes
-
-        pass
+        self._send_email_with_resume_of_changes()
 
     @classmethod
     def _get_api_token_from_user(cls):
@@ -228,3 +234,11 @@ class AppUpdater:
         encoded_license = base64.b64encode(raw_yaml_license.encode('utf-8'))
         return encoded_license
 
+    def _send_email_with_resume_of_changes(self):
+
+        changes_made = self.changes_made
+
+        email_sender = EmailSender()
+
+        for user_target in self.developers:
+            email_sender.send_email(user_target, 'actualizacion Core', changes_made)
