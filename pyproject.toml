@@ -18,6 +18,7 @@ gitpython = "^3.1.32"
 
 [tool.poetry.group.dev.dependencies]
 coverage = "^7.2.7"
+flake8 = "^6.1.0"
 
 [build-system]
 requires = ["poetry-core"]
