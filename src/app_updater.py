@@ -148,3 +148,28 @@ class AppUpdater:
         raw_yaml_license = decoded_license.decode('utf-8')
         license = yaml.safe_load(raw_yaml_license)
         return license
+
+    def _update_expitation_date_if_operator_wants(self, license: str) -> dict:
+        # TODO: refactor when the CLI class is created
+        expiration_date = self._get_expiration_date_from_license(license)
+        user_messages = UserMessages(
+            prints=[
+                f"La fecha de expiracion actual es: {expiration_date}",
+            ],
+            input="Desea actualizar la app? [Y/n]",
+        )
+        if self._operator_wants(user_messages):
+            self._update_expiration_date_asking_the_value_to_the_operator(license)
+
+        return license
+
+    def _get_expiration_date_from_license(self, license: str) -> str:
+        return license.get('license').get('expiration_date')
+
+    def _update_expiration_date_asking_the_value_to_the_operator(self, license: str) -> dict:
+        license['license']['expiration_date'] = self._get_new_expiration_date_from_operator()
+        return license
+
+    def _get_new_expiration_date_from_operator(self) -> str:
+        new_expiration_date = input("Ingrese la nueva fecha de expiracion: ")
+        return new_expiration_date
