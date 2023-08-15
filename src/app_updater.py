@@ -173,3 +173,27 @@ class AppUpdater:
     def _get_new_expiration_date_from_operator(self) -> str:
         new_expiration_date = input("Ingrese la nueva fecha de expiracion: ")
         return new_expiration_date
+
+    def _update_the_maximum_number_of_processes_if_operator_wants(self, license: str) -> dict:
+        maximum_number_of_processes = self._get_maximum_number_of_processes(license)
+        user_messages = UserMessages(
+            prints=[
+                f"El maximo numero de procesos actual es: {maximum_number_of_processes}",
+            ],
+            input="Desea actualizar la app? [Y/n]",
+        )
+        if self._operator_wants(user_messages):
+            license = self._update_maximum_number_of_processes_asking_the_value_to_the_operator(license)
+        return license
+
+    def _get_maximum_number_of_processes(self, license: str) -> str:
+        return license.get('environment').get('license').get('maximum_number_of_processes')
+
+    def _update_maximum_number_of_processes_asking_the_value_to_the_operator(self, license: str) -> dict:
+        new_maximum_number_of_processes = self._get_new_maximum_number_of_processes_from_operator()
+        license['license']['maximum_number_of_processes'] = new_maximum_number_of_processes
+        return license
+
+    def _get_new_maximum_number_of_processes_from_operator(self) -> str:
+        new_maximum_number_of_processes = input("Ingrese la nueva fecha de expiracion: ")
+        return new_maximum_number_of_processes
