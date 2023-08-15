@@ -1,4 +1,5 @@
 from pathlib import Path
+import base64
 import os
 import subprocess
 import traceback
@@ -16,6 +17,7 @@ class AppUpdater:
     organization_name = "core-webapp"
     repository_name = "core_legacy"
     user_input_true = 'y'
+    license_path = Path() / repository_name / 'sate' / 'utils' / 'license.yaml'
     requirements_path = Path() / repository_name / 'requirements.txt'
 
     def install_source_code(self):
@@ -130,3 +132,19 @@ class AppUpdater:
         except Exception as e:
             print(f"Ocurrió un error inesperado: {e}")
             traceback.print_exc()
+
+    def _get_the_license_decoded(self) -> str:
+        encodede_license = self._get_license_from_file()
+        decoded_license = self._decode_license(encodede_license)
+        return decoded_license
+
+    def _get_license_from_file(self) -> str:
+        with open(self.license_path, 'rb') as file:
+            encodede_license = file.read()
+        return encodede_license
+
+    def _decode_license(self, encodede_license: str) -> str:
+        decoded_license = base64.b64decode(encodede_license)
+        raw_yaml_license = decoded_license.decode('utf-8')
+        license = yaml.safe_load(raw_yaml_license)
+        return license
