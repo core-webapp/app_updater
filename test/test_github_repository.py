@@ -4,6 +4,7 @@ from unittest.mock import (
     patch,
 )
 
+from git import Repo
 from github import (
     Auth,
     BadCredentialsException,
@@ -167,6 +168,37 @@ def test_last_release_property(
     assert last_release == fake_last_release
 
 
+@patch.object(GithubRepository, '_get_commit_sha_of_release')
+@patch.object(GithubRepository, '_get_last_release')
+@patch.object(GithubRepository, '_get_github_account')
+def test_commit_of_last_release_property(
+    patched_get_github_account: MagicMock,
+    patched_get_last_release: MagicMock,
+    patched_get_commit_sha_of_release: MagicMock,
+):
+    token = "some_token"
+    organizacion_name = "some_organization"
+    repository_name = "some_repository"
+
+    mock_repo = Mock()
+    mock_github_account = Mock()
+    mock_github_account.get_repo.return_value = mock_repo
+    patched_get_github_account.return_value = mock_github_account
+
+    fake_last_release = "fake_last_release"
+    patched_get_last_release.return_value = fake_last_release
+    expected_commit_of_last_release = "fake_commit_sha"
+    patched_get_commit_sha_of_release.return_value = expected_commit_of_last_release
+
+    github_repository = GithubRepository(token, organizacion_name, repository_name)
+
+    # test
+    commit_of_last_release = github_repository.commit_of_last_release
+
+    # asserts
+    assert commit_of_last_release == expected_commit_of_last_release
+
+
 def test_get_last_release():
 
     # prepare
@@ -212,3 +244,53 @@ def test_get_commit_sha_of_release():
     # asserts
     mock_repository.get_git_ref.assert_called_once_with(f"tags/{mock_release.tag_name}")
     assert last_release == expected_commit_sha
+
+
+@patch.object(GithubRepository, '_fetch_and_checkout')
+def test_change_source_code_version(patched_fetch_and_checkout: MagicMock):
+    # prepare
+    mock_github_repository = get_github_repository_mock()
+    fake_commit = "fake_commit"
+
+    # test
+    mock_github_repository.change_source_code_version(fake_commit)
+
+    # asserts
+    patched_fetch_and_checkout.assert_called_once_with(fake_commit)
+
+
+@patch('src.github_repository.Repo')
+def test_fetch_and_checkout(patched_repo: MagicMock):
+    # prepare
+    mock_repository = Mock()
+    patched_repo.return_value = mock_repository
+
+    mock_github_repository = get_github_repository_mock()
+    fake_commit = "fake_commit"
+
+    # test
+    mock_github_repository._fetch_and_checkout(fake_commit)
+
+    # asserts
+    patched_repo.assert_called_once_with(mock_github_repository.source_code_path)
+    mock_repository.remote.assert_called_once()
+    mock_repository.remote().fetch.assert_called_once()
+    mock_repository.git.checkout.assert_called_once_with(fake_commit)
+
+
+@patch.object(Repo, 'clone_from')
+def test_clone_repository(patched_clone_from: MagicMock):
+    # prepare
+    fake_repository_url = "https://fake_repository_url"
+    fake_path_to_clone_the_app = "fake_path_to_clone_the_app"
+
+    token = "some_token"
+    expected_repo_url_with_token = f"https://{token}@fake_repository_url"
+
+    mock_github_repository = get_github_repository_mock(token=token)
+
+    # test
+    mock_github_repository._clone_repository(fake_repository_url, fake_path_to_clone_the_app)
+
+    # asserts
+    patched_clone_from.assert_called_once_with(expected_repo_url_with_token, fake_path_to_clone_the_app)

@@ -1,5 +1,6 @@
 from datetime import datetime
 from unittest.mock import (
+    call,
     mock_open,
     patch,
     MagicMock,
@@ -10,6 +11,7 @@ import pytest
 import yaml
 
 from src.app_updater import AppUpdater
+from src.data_protocols import UserMessages
 from src.github_repository import GithubRepository
 
 
@@ -162,3 +164,121 @@ def test_get_version_info_from_file_invalid_yaml():
                 AppUpdater._get_version_info_from_file(mock_filepath)
 
     mock_file.assert_called_once_with(mock_filepath, 'r')
+
+
+@patch.object(AppUpdater, '_update_to_new_version')
+@patch.object(AppUpdater, '_operator_wants')
+def test_update_to_new_version_if_operator_wants_when_answesr_is_yes(
+    patched_operator_wants: MagicMock,
+    patched_update_to_new_version: MagicMock,
+):
+    # prepare
+    patched_operator_wants.return_value = True
+    fake_current_release_version = 'fake_current_release_version'
+    fake_remote_release_version = 'fake_remote_release_version'
+    mock_github_repository = Mock()
+    fake_user_message = UserMessages(
+        prints=[
+            f"La version actual es: {fake_current_release_version}",
+            f"Hay una nueva version disponible: {fake_remote_release_version}",
+        ],
+        input="Desea actualizar la app? [Y/n]",
+    )
+
+    app_updater = AppUpdater()
+    app_updater.current_release_version = fake_current_release_version
+    app_updater.remote_release_version = fake_remote_release_version
+
+    # test
+    app_updater._update_to_new_version_if_operator_wants(mock_github_repository)
+
+    # asserts
+    patched_operator_wants.assert_called_once_with(fake_user_message)
+    patched_update_to_new_version.assert_called_once_with(mock_github_repository)
+
+
+@patch.object(AppUpdater, '_update_to_new_version')
+@patch.object(AppUpdater, '_operator_wants')
+def test_update_to_new_version_if_operator_wants_when_answers_no_or_anything_different_from_yes(
+    patched_operator_wants: MagicMock,
+    patched_update_to_new_version: MagicMock,
+):
+    # prepare
+    patched_operator_wants.return_value = False
+    fake_current_release_version = 'fake_current_release_version'
+    fake_remote_release_version = 'fake_remote_release_version'
+    mock_github_repository = Mock()
+    fake_user_message = UserMessages(
+        prints=[
+            f"La version actual es: {fake_current_release_version}",
+            f"Hay una nueva version disponible: {fake_remote_release_version}",
+        ],
+        input="Desea actualizar la app? [Y/n]",
+    )
+
+    app_updater = AppUpdater()
+    app_updater.current_release_version = fake_current_release_version
+    app_updater.remote_release_version = fake_remote_release_version
+
+    # test
+    app_updater._update_to_new_version_if_operator_wants(mock_github_repository)
+
+    # asserts
+    patched_operator_wants.assert_called_once_with(fake_user_message)
+    patched_update_to_new_version.assert_not_called()
+
+
+@pytest.mark.parametrize(
+    'user_input, expected_result', [
+        ('y', True),
+        ('Y', True),
+        ('yes', False),
+        ('YES', False),
+        ('n', False),
+        ('N', False),
+    ]
+)
+@patch('builtins.print')
+@patch('builtins.input')
+def test_operator_wants(
+    patched_input: MagicMock,
+    patched_print: MagicMock,
+    user_input: str,
+    expected_result: bool,
+):
+    # prepare
+    fake_user_messages = UserMessages(
+        prints=[
+            "print1",
+            "print2",
+        ],
+        input="input",
+    )
+    fake_answer = user_input
+    patched_input.return_value = fake_answer
+
+    app_updater = AppUpdater()
+
+    # test
+
+    result = app_updater._operator_wants(fake_user_messages)
+
+    # asserts
+    patched_print.assert_has_calls(map(call, fake_user_messages.prints))
+    patched_input.assert_called_once_with(fake_user_messages.input)
+    assert result == expected_result
+
+
+def test_update_to_new_version():
+    # prepare
+    fake_commit_of_last_release = 'fake_commit_of_last_release'
+    mock_github_repository = Mock()
+    mock_github_repository.commit_of_last_release = fake_commit_of_last_release
+
+    app_updater = AppUpdater()
+
+    # test
+    app_updater._update_to_new_version(mock_github_repository)
+
+    # asserts
+    mock_github_repository.change_source_code_version.assert_called_once_with(fake_commit_of_last_release)
