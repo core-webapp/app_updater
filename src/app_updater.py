@@ -20,6 +20,7 @@ class AppUpdater:
     user_input_true = 'y'
     license_path = Path() / repository_name / 'state' / 'utils' / 'license.yaml'
     requirements_path = Path() / repository_name / 'requirements.txt'
+    config_file_path = Path() / '.config.yaml'
 
     # TODO where should we add the developers? harcoded here or in a config file?
     developers: tuple[str]
@@ -49,33 +50,57 @@ class AppUpdater:
         # TODO: send mail with a resume of the new changes
         pass
 
-    def update_source_code(self):
+    def update_source_code_automaticaly(self):
 
-        token = self._get_api_token()
-        github_repository = GithubRepository(token)
+        token = self._get_api_token('automatic')
+        github_repository = GithubRepository(
+            token,
+            self.organization_name,
+            self.repository_name,
+        )
 
-        if self._there_is_a_newer_version(github_repository):
-            self._update_to_new_version_if_operator_wants(github_repository)
+        version_tag = self._get_version_tag_to_update()
+        self._update_to_new_version(github_repository, version_tag)
 
-        self._install_dependencies_from_requirements()
+        # self._install_dependencies_from_requirements()
 
-        self.update_the_license_if_operator_wants()
+        # self._run_database_migration()
+        # self._send_email_with_resume_of_changes()
 
-        # TODO: ask the operator if wants to update the database, include an migration tool like alembic for this
+    @classmethod
+    def _get_api_token(cls, mode: str = 'manual') -> str:
+        if mode == 'automatic':
+            return cls._get_api_token_automaticaly()
 
-        self._send_email_with_resume_of_changes()
+        return cls._get_api_token_manualy()
+
+    @classmethod
+    def _get_api_token_automaticaly(cls) -> str:
+        with open(cls.config_file_path, 'rb') as file:
+            raw_yaml_config = file.read()
+            config = yaml.safe_load(raw_yaml_config)
+            token = config.get('token')
+        return token
+
+    @classmethod
+    def _get_api_token_manualy(cls):
+        for _ in range(cls.max_input_retries):
+            api_token = cls._get_api_token_from_user()
+            if GithubRepository._is_token_valid(api_token):
+                return api_token
+        raise Exception('Max retries exceeded')
 
     @classmethod
     def _get_api_token_from_user(cls):
         return pwinput('Enter your API TOKEN: ')
 
     @classmethod
-    def _get_api_token(cls):
-        for _ in range(cls.max_input_retries):
-            api_token = cls._get_api_token_from_user()
-            if GithubRepository._is_token_valid(api_token):
-                return api_token
-        raise Exception('Max retries exceeded')
+    def _get_version_tag_to_update(cls) -> str:
+        with open(cls.config_file_path, 'rb') as file:
+            raw_yaml_config = file.read()
+            config = yaml.safe_load(raw_yaml_config)
+            token = config.get('version')
+        return token
 
     def _there_is_a_newer_version(self, github_repository: GithubRepository) -> bool:
         # FIXME : it's not a good idea to set values ina method that does another thing
@@ -121,11 +146,11 @@ class AppUpdater:
         answer = input(user_messages.input).lower()
         return answer == self.user_input_true
 
-    def _update_to_new_version(self, github_repository: GithubRepository):
-        commit_of_last_release = github_repository.commit_of_last_release
-        github_repository.change_source_code_version(commit_of_last_release)
+    def _update_to_new_version(self, github_repository: GithubRepository, version_tag: str = 'qa') -> None:
+        version_commit = github_repository.get_commit_sha_of_version_tag(version_tag)
+        github_repository.change_source_code_version(version_commit)
         self._log_change(
-            f"Se actualizo a la version {github_repository.last_release} - commit {commit_of_last_release}\n\n"
+            f"Se actualizo a la version {version_tag} - commit {version_commit}\n\n"
         )
 
     def _log_change(self, change: str) -> None:
