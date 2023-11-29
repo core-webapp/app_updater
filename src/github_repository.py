@@ -58,8 +58,12 @@ class GithubRepository:
         latest_release = self.repository.get_latest_release()
         return latest_release.tag_name
 
+    def get_commit_sha_of_version_tag(self, version_tag: str) -> str:
+        commit = self.repository.get_git_ref(f"tags/{version_tag}")
+        return commit.object.sha
+
     def _get_commit_sha_of_release(self, release: GitRelease.GitRelease) -> str:
-        release_commit = self.repository.get_git_ref(f"tags/{release.tag_name}")
+        release_commit = self.repository.get_git_ref(f"tags/{release}")
         return release_commit.object.sha
 
     def _clone_repository(self, repository_url: str, path_to_clone_the_app: str):
