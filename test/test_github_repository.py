@@ -226,8 +226,7 @@ def test_get_commit_sha_of_release():
     # prepare
     expected_commit_sha = "expected_commit_sha"
 
-    mock_release = Mock()
-    mock_release.tag_name = "some_tag_name"
+    mock_release = "mock_release"
 
     mock_release_commit = Mock()
     mock_release_commit.object.sha = expected_commit_sha
@@ -242,7 +241,7 @@ def test_get_commit_sha_of_release():
     last_release = mock_github_repository._get_commit_sha_of_release(mock_release)
 
     # asserts
-    mock_repository.get_git_ref.assert_called_once_with(f"tags/{mock_release.tag_name}")
+    mock_repository.get_git_ref.assert_called_once_with(f"tags/{mock_release}")
     assert last_release == expected_commit_sha
 
 
