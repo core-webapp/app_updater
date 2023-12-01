@@ -59,20 +59,15 @@ class AppUpdater:
             version_control_info = self.core_service_repo.get_version_control_info()
             token = version_control_info.get('token')
             version_tag = version_control_info.get('version')
-            github_repository = GithubRepository(
-                token,
-                self.organization_name,
-                self.repository_name,
-            )
         else:
             token = self._get_api_token('automatic')
-            github_repository = GithubRepository(
-                token,
-                self.organization_name,
-                self.repository_name,
-            )
-
             version_tag = self._get_version_tag_to_update()
+
+        github_repository = GithubRepository(
+            token,
+            self.organization_name,
+            self.repository_name,
+        )
         self._update_to_new_version(github_repository, version_tag)
 
         # self._install_dependencies_from_requirements()
