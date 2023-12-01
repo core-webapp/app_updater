@@ -4,6 +4,7 @@ import os
 import subprocess
 import traceback
 import yaml
+from src.core_service import CoreService
 
 from packaging import version
 from pwinput import pwinput
@@ -12,8 +13,8 @@ from src.data_protocols import UserMessages
 from src.email_sender import EmailSender
 from .github_repository import GithubRepository
 
-
 class AppUpdater:
+    use_core_be = True
     max_input_retries = 3
     organization_name = "core-webapp"
     repository_name = "core_legacy"
@@ -30,6 +31,9 @@ class AppUpdater:
     password_mail: str
 
     changes_made = []
+
+    def __init__(self, core_service_repo_klass: type[CoreService]=CoreService):
+        self.core_service_repo = core_service_repo_klass()
 
     def install_source_code(self):
 
@@ -51,15 +55,19 @@ class AppUpdater:
         pass
 
     def update_source_code_automaticaly(self):
+        if self.use_core_be:
+            version_control_info = self.core_service_repo.get_version_control_info()
+            token = version_control_info.get('token')
+            version_tag = version_control_info.get('version')
+        else:
+            token = self._get_api_token('automatic')
+            version_tag = self._get_version_tag_to_update()
 
-        token = self._get_api_token('automatic')
         github_repository = GithubRepository(
             token,
             self.organization_name,
             self.repository_name,
         )
-
-        version_tag = self._get_version_tag_to_update()
         self._update_to_new_version(github_repository, version_tag)
 
         # self._install_dependencies_from_requirements()
