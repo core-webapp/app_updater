@@ -2,7 +2,7 @@ import os
 import requests
 
 class CoreService:
-    BASE_URL = "http://localhost:8001/"
+    BASE_URL = "https://core-be-production.up.railway.app/"
 
     def __init__(self, token=None):
         self.token = token if token else os.getenv("CORE_BE_TOKEN")
