@@ -64,7 +64,6 @@ class AppUpdater:
                 self.organization_name,
                 self.repository_name,
             )
-            self._update_to_new_version(github_repository, version_tag)
         else:
             token = self._get_api_token('automatic')
             github_repository = GithubRepository(
@@ -74,7 +73,7 @@ class AppUpdater:
             )
 
             version_tag = self._get_version_tag_to_update()
-            self._update_to_new_version(github_repository, version_tag)
+        self._update_to_new_version(github_repository, version_tag)
 
         # self._install_dependencies_from_requirements()
 
