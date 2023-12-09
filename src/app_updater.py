@@ -8,7 +8,6 @@ import yaml
 from packaging import version
 from pwinput import pwinput
 
-from src.data_protocols import UserMessages
 from src.email_sender import EmailSender
 from .github_repository import GithubRepository
 

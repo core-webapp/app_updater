@@ -11,7 +11,6 @@ import pytest
 import yaml
 
 from src.app_updater import AppUpdater
-from src.data_protocols import UserMessages
 from src.github_repository import GithubRepository
 
 
