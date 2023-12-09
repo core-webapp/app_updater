@@ -87,41 +87,6 @@ class AppUpdater:
             token = config.get('version')
         return token
 
-    def _there_is_a_newer_version(self, github_repository: GithubRepository) -> bool:
-        # FIXME : it's not a good idea to set values ina method that does another thing
-        # but for now is the easy and fast way to do it, I will refactor later
-        self.current_release_version = version.parse(self._get_current_local_version())
-        self.remote_release_version = version.parse(github_repository.release)
-
-        return self.current_release_version < self.remote_release_version
-
-    def _get_current_local_version(self) -> str:
-        current_local_version = self._get_version_info_from_file('.version.yaml')
-        release_version = current_local_version.get('release_version')
-        return release_version
-
-    @staticmethod
-    def _get_version_info_from_file(filepath: str) -> dict:
-
-        if not os.path.isfile(filepath):
-            raise Exception("El archivo no existe")
-
-        with open(filepath, 'r') as file:
-            data = yaml.safe_load(file)
-        return data
-
-    def _update_to_new_version_if_operator_wants(self, github_repository: GithubRepository) -> None:
-        # TODO: refactor when the CLI class is created
-        user_messages = UserMessages(
-            prints=[
-                f"La version actual es: {self.current_release_version}",
-                f"Hay una nueva version disponible: {self.remote_release_version}",
-            ],
-            input="Desea actualizar la app? [Y/n]",
-        )
-        if self._operator_wants(user_messages):
-            self._update_to_new_version(github_repository)
-
     def _operator_wants(self, user_messages: UserMessages) -> bool:
         # FIXME: this method must go in another class with the responsabilty
         # to comunicate with the operator, a CLI class, when that class is created migrated this to there
