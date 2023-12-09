@@ -87,15 +87,6 @@ class AppUpdater:
             token = config.get('version')
         return token
 
-    def _operator_wants(self, user_messages: UserMessages) -> bool:
-        # FIXME: this method must go in another class with the responsabilty
-        # to comunicate with the operator, a CLI class, when that class is created migrated this to there
-        for print_message in user_messages.prints:
-            print(print_message)
-
-        answer = input(user_messages.input).lower()
-        return answer == self.user_input_true
-
     def _update_to_new_version(self, github_repository: GithubRepository, version_tag: str = 'qa') -> None:
         version_commit = github_repository.get_commit_sha_of_version_tag(version_tag)
         github_repository.change_source_code_version(version_commit)
