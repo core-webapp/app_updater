@@ -1,14 +1,9 @@
-from datetime import datetime
 from unittest.mock import (
-    call,
-    mock_open,
     patch,
     MagicMock,
-    Mock,
 )
 
 import pytest
-import yaml
 
 from src.app_updater import AppUpdater
 from src.github_repository import GithubRepository

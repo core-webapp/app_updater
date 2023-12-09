@@ -1,12 +1,7 @@
 from pathlib import Path
-import base64
-import os
 import subprocess
 import traceback
 import yaml
-
-from packaging import version
-from pwinput import pwinput
 
 from src.email_sender import EmailSender
 from .github_repository import GithubRepository
