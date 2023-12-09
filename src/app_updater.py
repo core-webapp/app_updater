@@ -52,7 +52,7 @@ class AppUpdater:
 
     def update_source_code_automaticaly(self):
 
-        token = self._get_api_token('automatic')
+        token = self._get_api_token()
         github_repository = GithubRepository(
             token,
             self.organization_name,
@@ -68,11 +68,8 @@ class AppUpdater:
         # self._send_email_with_resume_of_changes()
 
     @classmethod
-    def _get_api_token(cls, mode: str = 'manual') -> str:
-        if mode == 'automatic':
-            return cls._get_api_token_automaticaly()
-
-        return cls._get_api_token_manualy()
+    def _get_api_token(cls) -> str:
+        return cls._get_api_token_automaticaly()
 
     @classmethod
     def _get_api_token_automaticaly(cls) -> str:
@@ -81,18 +78,6 @@ class AppUpdater:
             config = yaml.safe_load(raw_yaml_config)
             token = config.get('token')
         return token
-
-    @classmethod
-    def _get_api_token_manualy(cls):
-        for _ in range(cls.max_input_retries):
-            api_token = cls._get_api_token_from_user()
-            if GithubRepository._is_token_valid(api_token):
-                return api_token
-        raise Exception('Max retries exceeded')
-
-    @classmethod
-    def _get_api_token_from_user(cls):
-        return pwinput('Enter your API TOKEN: ')
 
     @classmethod
     def _get_version_tag_to_update(cls) -> str:

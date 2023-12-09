@@ -27,56 +27,6 @@ def mock_github_repository() -> GithubRepository:
 
 
 @pytest.mark.parametrize(
-    "user_input, expected", [
-        ('1234567890', '1234567890'),
-        ('asdfasdkjkñljñljklñkjñadfs', 'asdfasdkjkñljñljklñkjñadfs'),
-        ('', ''),
-    ]
-)
-@patch('src.app_updater.pwinput')
-def test_get_api_token_from_user(
-    pwinput_mock: MagicMock,
-    user_input: str,
-    expected: str,
-):
-    pwinput_mock.return_value = user_input
-    result = AppUpdater._get_api_token_from_user()
-    assert result == expected
-
-
-@patch.object(AppUpdater, '_get_api_token_from_user')
-@patch.object(GithubRepository, '_is_token_valid')
-def test_get_api_token_max_retries_exceeded(
-    patched_is_token_valid: MagicMock,
-    patched_get_api_token_from_user: MagicMock,
-):
-
-    token = "some_token"
-    patched_get_api_token_from_user.return_value = token
-    patched_is_token_valid.side_effect = [False] * AppUpdater.max_input_retries
-
-    with pytest.raises(Exception, match='Max retries exceeded'):
-        AppUpdater._get_api_token()
-
-
-@pytest.mark.parametrize(
-    "amount_of_bad_tokens", [0, 1, 2],
-)
-@patch.object(AppUpdater, '_get_api_token_from_user')
-@patch.object(GithubRepository, '_is_token_valid')
-def test_get_api_token(
-    patched_is_token_valid: MagicMock,
-    patched_get_api_token_from_user: MagicMock,
-    amount_of_bad_tokens: int,
-):
-    token = "some_token"
-    patched_get_api_token_from_user.return_value = token
-    patched_is_token_valid.side_effect = [False] * amount_of_bad_tokens + [True]
-    result_token = AppUpdater._get_api_token()
-    assert result_token == token
-
-
-@pytest.mark.parametrize(
     "current_version, remote_version, expected", [
         ('1.0.0', '1.0.0', False),
         ('1.0.0', '1.0.1', True),
