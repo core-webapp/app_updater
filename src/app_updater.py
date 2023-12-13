@@ -1,7 +1,7 @@
 from pathlib import Path
 import subprocess
 import traceback
-import yaml
+from src.version_control_provider import LocalConfigProvider, VersionControlProvider
 
 from src.email_sender import EmailSender
 from .github_repository import GithubRepository
@@ -11,10 +11,9 @@ class AppUpdater:
     max_input_retries = 3
     organization_name = "core-webapp"
     repository_name = "core_legacy"
-    user_input_true = 'y'
-    license_path = Path() / repository_name / 'state' / 'utils' / 'license.yaml'
-    requirements_path = Path() / repository_name / 'requirements.txt'
-    config_file_path = Path() / '.config.yaml'
+    user_input_true = "y"
+    license_path = Path() / repository_name / "state" / "utils" / "license.yaml"
+    requirements_path = Path() / repository_name / "requirements.txt"
 
     # TODO where should we add the developers? harcoded here or in a config file?
     developers: tuple[str]
@@ -25,21 +24,12 @@ class AppUpdater:
 
     changes_made = []
 
-    def __init__(self) -> None:
-        self.config = self.get_config_from_file()
-
-    @property
-    def local_repository_path(self) -> Path:
-        return Path(self.config.get('local_repository_path'))
-
-    def get_config_from_file(self) -> None:
-        with open(self.config_file_path, 'rb') as file:
-            raw_yaml_config = file.read()
-            config = yaml.safe_load(raw_yaml_config)
-        return config
+    def __init__(
+        self, version_control_provider: VersionControlProvider = LocalConfigProvider
+    ) -> None:
+        self.version_control_provider = version_control_provider()
 
     def install_source_code(self):
-
         # TODO: get token from user and if it is valid continue
 
         # TODO: clone the repository in the directory where is present the app_updater
@@ -57,31 +47,25 @@ class AppUpdater:
         # TODO: send mail with a resume of the new changes
         pass
 
-    def update_source_code_automaticaly(self):
-
-        token = self._get_api_token()
+    def update_source_code_automaticaly(self) -> None:
+        version_control_data = self.version_control_provider.get_config()
         github_repository = GithubRepository(
-            token,
+            version_control_data["token"],
             self.organization_name,
-            self.local_repository_path,
+            version_control_data["local_repository_path"],
             self.repository_name,
         )
 
-        version_tag = self._get_version_tag_to_update()
-        self._update_to_new_version(github_repository, version_tag)
+        self._update_to_new_version(github_repository, version_control_data["version"])
 
         # self._install_dependencies_from_requirements()
 
         # self._run_database_migration()
         # self._send_email_with_resume_of_changes()
 
-    def _get_api_token(self) -> str:
-        return self.config.get('token')
-
-    def _get_version_tag_to_update(self) -> str:
-        return self.config.get('version')
-
-    def _update_to_new_version(self, github_repository: GithubRepository, version_tag: str = 'qa') -> None:
+    def _update_to_new_version(
+        self, github_repository: GithubRepository, version_tag: str = "qa"
+    ) -> None:
         version_commit = github_repository.get_commit_sha_of_version_tag(version_tag)
         github_repository.change_source_code_version(version_commit)
         self._log_change(
@@ -103,10 +87,9 @@ class AppUpdater:
             traceback.print_exc()
 
     def _send_email_with_resume_of_changes(self):
-
         changes_made = self.changes_made
 
         email_sender = EmailSender()
 
         for user_target in self.developers:
-            email_sender.send_email(user_target, 'actualizacion Core', changes_made)
+            email_sender.send_email(user_target, "actualizacion Core", changes_made)

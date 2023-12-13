@@ -10,7 +10,6 @@ from git import Repo
 
 
 class GithubRepository:
-
     def __init__(
         self,
         api_token: str,
@@ -18,7 +17,6 @@ class GithubRepository:
         local_repository_path: Path,
         repository_name: str,
     ) -> None:
-
         self.api_token = api_token
         self.organizacion_name = organizacion_name
         self.repository_name = repository_name
@@ -26,7 +24,9 @@ class GithubRepository:
         self.source_code_path = local_repository_path
 
         self.github_account = self._get_github_account(self.api_token)
-        self.repository = self.github_account.get_repo(f'{self.organizacion_name}/{self.repository_name}')
+        self.repository = self.github_account.get_repo(
+            f"{self.organizacion_name}/{self.repository_name}"
+        )
 
         last_release = self._get_last_release()
         commit_sha = self._get_commit_sha_of_release(last_release)
@@ -40,11 +40,11 @@ class GithubRepository:
 
     @property
     def last_release(self) -> str:
-        return self.version_info.get('last_release')
+        return self.version_info.get("last_release")
 
     @property
     def commit_of_last_release(self) -> str:
-        return self.version_info.get('commit_sha')
+        return self.version_info.get("commit_sha")
 
     @classmethod
     def _is_token_valid(cls, token: str) -> bool:
@@ -73,7 +73,9 @@ class GithubRepository:
         return release_commit.object.sha
 
     def _clone_repository(self, repository_url: str, path_to_clone_the_app: str):
-        repo_url_with_token = repository_url.replace('https://', f'https://{self.api_token}@')
+        repo_url_with_token = repository_url.replace(
+            "https://", f"https://{self.api_token}@"
+        )
         Repo.clone_from(repo_url_with_token, path_to_clone_the_app)
 
     def change_source_code_version(self, commit: str) -> None:
