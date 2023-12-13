@@ -31,8 +31,8 @@ def test_update_to_new_version(
     fake_version_tag = 'fake_version_tag'
     fake_version_commit = 'fake_version_commit'
     patched_get_commit_sha_of_version_tag.return_value = fake_version_commit
-
-    app_updater = AppUpdater()
+    with patch.object(AppUpdater, 'get_config_from_file'):
+        app_updater = AppUpdater()
 
     # test
     app_updater._update_to_new_version(mock_github_repository, fake_version_tag)
