@@ -27,7 +27,10 @@ class AppUpdater:
 
     def __init__(self) -> None:
         self.config = self.get_config_from_file()
-        self.local_repository_path = Path(self.config.get('local_repository_path'))
+
+    @property
+    def local_repository_path(self) -> Path:
+        return Path(self.config.get('local_repository_path'))
 
     def get_config_from_file(self) -> None:
         with open(self.config_file_path, 'rb') as file:
