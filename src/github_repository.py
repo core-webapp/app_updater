@@ -11,13 +11,19 @@ from git import Repo
 
 class GithubRepository:
 
-    def __init__(self, api_token: str, organizacion_name: str, repository_name: str) -> None:
+    def __init__(
+        self,
+        api_token: str,
+        organizacion_name: str,
+        local_repository_path: Path,
+        repository_name: str,
+    ) -> None:
 
         self.api_token = api_token
         self.organizacion_name = organizacion_name
         self.repository_name = repository_name
 
-        self.source_code_path = Path.cwd() / repository_name
+        self.source_code_path = local_repository_path
 
         self.github_account = self._get_github_account(self.api_token)
         self.repository = self.github_account.get_repo(f'{self.organizacion_name}/{self.repository_name}')

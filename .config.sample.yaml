@@ -1,2 +1,3 @@
 token: token
 version: version
+local_repository_path: ../local/repository/path/

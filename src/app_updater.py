@@ -27,6 +27,7 @@ class AppUpdater:
 
     def __init__(self) -> None:
         self.config = self.get_config_from_file()
+        self.local_repository_path = Path(self.config.get('local_repository_path'))
 
     def get_config_from_file(self) -> None:
         with open(self.config_file_path, 'rb') as file:
@@ -59,6 +60,7 @@ class AppUpdater:
         github_repository = GithubRepository(
             token,
             self.organization_name,
+            self.local_repository_path,
             self.repository_name,
         )
 
