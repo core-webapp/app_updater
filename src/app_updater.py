@@ -25,6 +25,15 @@ class AppUpdater:
 
     changes_made = []
 
+    def __init__(self) -> None:
+        self.config = self.get_config_from_file()
+
+    def get_config_from_file(self) -> None:
+        with open(self.config_file_path, 'rb') as file:
+            raw_yaml_config = file.read()
+            config = yaml.safe_load(raw_yaml_config)
+        return config
+
     def install_source_code(self):
 
         # TODO: get token from user and if it is valid continue
@@ -61,25 +70,11 @@ class AppUpdater:
         # self._run_database_migration()
         # self._send_email_with_resume_of_changes()
 
-    @classmethod
-    def _get_api_token(cls) -> str:
-        return cls._get_api_token_automaticaly()
+    def _get_api_token(self) -> str:
+        return self.config.get('token')
 
-    @classmethod
-    def _get_api_token_automaticaly(cls) -> str:
-        with open(cls.config_file_path, 'rb') as file:
-            raw_yaml_config = file.read()
-            config = yaml.safe_load(raw_yaml_config)
-            token = config.get('token')
-        return token
-
-    @classmethod
-    def _get_version_tag_to_update(cls) -> str:
-        with open(cls.config_file_path, 'rb') as file:
-            raw_yaml_config = file.read()
-            config = yaml.safe_load(raw_yaml_config)
-            token = config.get('version')
-        return token
+    def _get_version_tag_to_update(self) -> str:
+        return self.config.get('version')
 
     def _update_to_new_version(self, github_repository: GithubRepository, version_tag: str = 'qa') -> None:
         version_commit = github_repository.get_commit_sha_of_version_tag(version_tag)
