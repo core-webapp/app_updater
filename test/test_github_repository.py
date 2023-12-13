@@ -1,3 +1,4 @@
+from pathlib import Path
 from unittest.mock import (
     MagicMock,
     Mock,
@@ -26,6 +27,7 @@ def get_github_repository_mock(
                 github_repository = GithubRepository(
                     api_token=token,
                     organizacion_name=organizacion_name,
+                    local_repository_path=Path(),
                     repository_name=repository_name,
                 )
     return github_repository
@@ -41,6 +43,7 @@ def test_github_repository_init(
 ):
     token = "some_token"
     organizacion_name = "some_organization"
+    local_repository_path = Path()
     repository_name = "some_repository"
 
     mock_repo = Mock()
@@ -60,11 +63,17 @@ def test_github_repository_init(
     }
 
     # test
-    github_repository = GithubRepository(token, organizacion_name, repository_name)
+    github_repository = GithubRepository(
+        token,
+        organizacion_name,
+        local_repository_path,
+        repository_name,
+    )
 
     # asserts
     assert github_repository.api_token == token
     assert github_repository.organizacion_name == organizacion_name
+    assert github_repository.source_code_path == local_repository_path
     assert github_repository.repository_name == repository_name
 
     patched_get_github_account.assert_called_once_with(token)
@@ -147,6 +156,7 @@ def test_last_release_property(
 ):
     token = "some_token"
     organizacion_name = "some_organization"
+    local_repository_path = Path()
     repository_name = "some_repository"
 
     mock_repo = Mock()
@@ -159,7 +169,12 @@ def test_last_release_property(
     fake_commit_sha = "fake_commit_sha"
     patched_get_commit_sha_of_release.return_value = fake_commit_sha
 
-    github_repository = GithubRepository(token, organizacion_name, repository_name)
+    github_repository = GithubRepository(
+        token,
+        organizacion_name,
+        local_repository_path,
+        repository_name,
+    )
 
     # test
     last_release = github_repository.last_release
@@ -178,6 +193,7 @@ def test_commit_of_last_release_property(
 ):
     token = "some_token"
     organizacion_name = "some_organization"
+    local_repository_path = Path()
     repository_name = "some_repository"
 
     mock_repo = Mock()
@@ -190,7 +206,12 @@ def test_commit_of_last_release_property(
     expected_commit_of_last_release = "fake_commit_sha"
     patched_get_commit_sha_of_release.return_value = expected_commit_of_last_release
 
-    github_repository = GithubRepository(token, organizacion_name, repository_name)
+    github_repository = GithubRepository(
+        token,
+        organizacion_name,
+        local_repository_path,
+        repository_name,
+    )
 
     # test
     commit_of_last_release = github_repository.commit_of_last_release
